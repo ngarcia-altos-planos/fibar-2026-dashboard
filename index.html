@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIBAR 2026 · Valladolid</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0d5b4f;
+            --primary-light: #1a7d6d;
+            --accent: #c9a961;
+            --dark: #063d34;
+            --light: #f8f8f8;
+            --border: #e0e0e0;
+            --text: #333;
+            --success: #4caf50;
+            --warning: #ff9800;
+            --error: #f44336;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --text: #f0f0f0;
+                --light: #1a1a1a;
+                --border: #333;
+                --primary: #2a6d42;
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, var(--dark) 0%, var(--primary) 100%);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            color: var(--accent);
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            color: #ccc;
+            margin-bottom: 20px;
+        }
+
+        .countdown {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .countdown-item {
+            background: linear-gradient(135deg, var(--primary-light), var(--primary));
+            padding: 20px 30px;
+            border-radius: 12px;
+            text-align: center;
+            min-width: 120px;
+            border: 2px solid var(--accent);
+        }
+
+        .countdown-number {
+            font-size: 3em;
+            font-weight: 900;
+            color: var(--accent);
+            line-height: 1;
+            display: block;
+        }
+
+        .countdown-label {
+            font-size: 0.9em;
+            color: #ccc;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .card {
+                background: rgba(30, 30, 30, 0.9);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            }
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            padding: 20px;
+            font-size: 1.3em;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header:hover {
+            background: linear-gradient(135deg, var(--primary-light), var(--primary));
+        }
+
+        .toggle-icon {
+            font-size: 1.5em;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-icon.open {
+            transform: rotate(180deg);
+        }
+
+        .card-content {
+            padding: 20px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .card-content.open {
+            max-height: 2000px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--light);
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        tr:hover {
+            background: var(--light);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            tr:hover {
+                background: rgba(255, 255, 255, 0.05);
+            }
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .status-badge.confirmed {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+
+        .status-badge.pending {
+            background: #fff9c4;
+            color: #f57f17;
+        }
+
+        .status-badge.cancelled {
+            background: #ffcdd2;
+            color: #c62828;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+            color: var(--accent);
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #f44336;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .error {
+                background: rgba(244, 67, 54, 0.1);
+            }
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #ccc;
+            font-size: 0.9em;
+            margin-top: 40px;
+        }
+
+        .stat-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .stat-box {
+            background: var(--light);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍹 FIBAR 2026</h1>
+            <p>Gestión de Evento · Valladolid</p>
+            <div class="countdown" id="countdown"></div>
+        </header>
+
+        <div id="loading" class="loading">Cargando datos en vivo...</div>
+        <div id="error"></div>
+        <div id="content" style="display: none;"></div>
+    </div>
+
+    <footer>
+        <p>Datos sincronizados en tiempo real desde Airtable</p>
+        <p>FIBAR 2026 © Altos Planos</p>
+    </footer>
+
+    <script>
+        const BACKEND_URL = 'https://fibarvalaldolid2026-91c6f73ef573.herokuapp.com';
+
+        // Función para inicializar el countdown
+        function initCountdown() {
+            const eventDate = new Date('2026-08-15').getTime();
+
+            function updateCountdown() {
+                const now = new Date().getTime();
+                const distance = eventDate - now;
+
+                if (distance < 0) {
+                    document.getElementById('countdown').innerHTML = '<div style="color: var(--accent); font-size: 1.5em;">¡El evento está aquí! 🎉</div>';
+                    return;
+                }
+
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+
+                document.getElementById('countdown').innerHTML = `
+                    <div class="countdown-item">
+                        <span class="countdown-number">${days}</span>
+                        <span class="countdown-label">Días</span>
+                    </div>
+                    <div class="countdown-item">
+                        <span class="countdown-number">${hours}</span>
+                        <span class="countdown-label">Horas</span>
+                    </div>
+                    <div class="countdown-item">
+                        <span class="countdown-number">${minutes}</span>
+                        <span class="countdown-label">Minutos</span>
+                    </div>
+                `;
+            }
+
+            updateCountdown();
+            setInterval(updateCountdown, 60000);
+        }
+
+        // Función para crear una tarjeta de tabla
+        function createCard(title, data, columns) {
+            if (!data || data.length === 0) {
+                return `
+                    <div class="card">
+                        <div class="card-header">
+                            <span>${title}</span>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div class="card-content">
+                            <p style="color: #999;">No hay datos disponibles</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            let tableHTML = `<table>
+                <thead>
+                    <tr>${columns.map(col => `<th>${col}</th>`).join('')}</tr>
+                </thead>
+                <tbody>`;
+
+            data.forEach(item => {
+                tableHTML += '<tr>';
+                columns.forEach(col => {
+                    const value = item[col] || '-';
+                    tableHTML += `<td>${value}</td>`;
+                });
+                tableHTML += '</tr>';
+            });
+
+            tableHTML += '</tbody></table>';
+
+            return `
+                <div class="card">
+                    <div class="card-header" onclick="toggleCard(this)">
+                        <span>${title} (${data.length})</span>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="card-content">
+                        ${tableHTML}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Función para hacer toggle de las tarjetas
+        function toggleCard(header) {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('.toggle-icon');
+
+            content.classList.toggle('open');
+            icon.classList.toggle('open');
+        }
+
+        // Función para cargar datos
+        async function loadData() {
+            try {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('error').innerHTML = '';
+
+                const response = await fetch(`${BACKEND_URL}/api/all`);
+
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                document.getElementById('loading').style.display = 'none';
+
+                let html = '<div class="grid">';
+
+                // Mostrar cada tabla
+                if (data.Equipos && data.Equipos.length > 0) {
+                    html += createCard('👥 Equipos', data.Equipos, ['NOMBRE', 'ROL', 'LLEGADA', 'SALIDA', 'HAB.']);
+                }
+
+                if (data['Invitados del Bar'] && data['Invitados del Bar'].length > 0) {
+                    html += createCard('🍻 Invitados del Bar', data['Invitados del Bar'], ['NOMBRE', 'CONEXIÓN', 'DIETA', 'NOTAS']);
+                }
+
+                if (data.Viajes && data.Viajes.length > 0) {
+                    html += createCard('✈️ Viajes', data.Viajes, ['VIAJERO', 'TIPO', 'FECHA IDA', 'FECHA VUELTA']);
+                }
+
+                if (data.Habitaciones && data.Habitaciones.length > 0) {
+                    html += createCard('🏨 Habitaciones', data.Habitaciones, ['NOMBRE', 'NOCHE', 'HAB.', 'OCUPACIÓN']);
+                }
+
+                if (data['Turnos de Stand'] && data['Turnos de Stand'].length > 0) {
+                    html += createCard('🍹 Turnos de Stand', data['Turnos de Stand'], ['PERSONA', 'DÍA', 'TURNO', 'PUESTO']);
+                }
+
+                if (data['Productos y Consumibles'] && data['Productos y Consumibles'].length > 0) {
+                    html += createCard('🥃 Productos', data['Productos y Consumibles'], ['PRODUCTO', 'CANTIDAD', 'UNIDAD', 'ESTADO']);
+                }
+
+                if (data['POS y Merchandising'] && data['POS y Merchandising'].length > 0) {
+                    html += createCard('📦 POS & Merchandising', data['POS y Merchandising'], ['ITEM', 'CANTIDAD', 'UBICACIÓN', 'NOTAS']);
+                }
+
+                if (data.Brunch && data.Brunch.length > 0) {
+                    html += createCard('🥂 Brunch', data.Brunch, ['EVENTO', 'FECHA', 'HORA', 'LUGAR']);
+                }
+
+                html += '</div>';
+                document.getElementById('content').innerHTML = html;
+                document.getElementById('content').style.display = 'block';
+
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').innerHTML = `
+                    <div class="error">
+                        <strong>Error de conexión:</strong> No se pudo cargar los datos.
+                        Verifica que el backend esté activo: ${BACKEND_URL}
+                    </div>
+                `;
+                console.error('Error:', error);
+            }
+        }
+
+        // Cargar datos cuando se abre la página
+        document.addEventListener('DOMContentLoaded', function() {
+            initCountdown();
+            loadData();
+
+            // Recargar datos cada 5 segundos para mantenerlos actualizados
+            setInterval(loadData, 5000);
+        });
+    </script>
+</body>
+</html>
