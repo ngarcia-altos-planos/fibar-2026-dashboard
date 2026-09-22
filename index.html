@@ -169,10 +169,11 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
+            font-size: 0.9em;
         }
 
         th, td {
-            padding: 12px;
+            padding: 10px;
             text-align: left;
             border-bottom: 1px solid var(--border);
         }
@@ -191,29 +192,6 @@
             tr:hover {
                 background: rgba(255, 255, 255, 0.05);
             }
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            font-weight: 600;
-        }
-
-        .status-badge.confirmed {
-            background: #c8e6c9;
-            color: #2e7d32;
-        }
-
-        .status-badge.pending {
-            background: #fff9c4;
-            color: #f57f17;
-        }
-
-        .status-badge.cancelled {
-            background: #ffcdd2;
-            color: #c62828;
         }
 
         .loading {
@@ -245,32 +223,6 @@
             font-size: 0.9em;
             margin-top: 40px;
         }
-
-        .stat-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin: 15px 0;
-        }
-
-        .stat-box {
-            background: var(--light);
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid var(--accent);
-        }
-
-        .stat-label {
-            font-size: 0.9em;
-            color: #666;
-            margin-bottom: 5px;
-        }
-
-        .stat-value {
-            font-size: 1.8em;
-            font-weight: 700;
-            color: var(--primary);
-        }
     </style>
 </head>
 <body>
@@ -281,7 +233,7 @@
             <div class="countdown" id="countdown"></div>
         </header>
 
-        <div id="loading" class="loading">Cargando datos en vivo...</div>
+        <div id="loading" class="loading">Cargando datos desde Airtable...</div>
         <div id="error"></div>
         <div id="content" style="display: none;"></div>
     </div>
@@ -292,9 +244,22 @@
     </footer>
 
     <script>
-        const BACKEND_URL = 'https://fibarvalaldolid2026-91c6f73ef573.herokuapp.com';
+        // Configuración de Airtable - LLAMADAS DIRECTAS
+        const AIRTABLE_BASE_ID = 'appako5angOS2LFNw';
+        const AIRTABLE_API_TOKEN = 'patxS2qWOs56SbirP';
+        const AIRTABLE_API_URL = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}`;
 
-        // Función para inicializar el countdown
+        const tables = [
+            { name: 'Equipos', icon: '👥' },
+            { name: 'Invitados del Bar', icon: '🍻' },
+            { name: 'Viajes', icon: '✈️' },
+            { name: 'Habitaciones', icon: '🏨' },
+            { name: 'Turnos de Stand', icon: '🍹' },
+            { name: 'Productos y Consumibles', icon: '🥃' },
+            { name: 'POS y Merchandising', icon: '📦' },
+            { name: 'Brunch', icon: '🥂' }
+        ];
+
         function initCountdown() {
             const eventDate = new Date('2026-08-15').getTime();
 
@@ -331,8 +296,28 @@
             setInterval(updateCountdown, 60000);
         }
 
-        // Función para crear una tarjeta de tabla
-        function createCard(title, data, columns) {
+        async function fetchTableData(tableName) {
+            try {
+                const response = await fetch(`${AIRTABLE_API_URL}/${encodeURIComponent(tableName)}`, {
+                    headers: {
+                        'Authorization': `Bearer ${AIRTABLE_API_TOKEN}`
+                    }
+                });
+
+                if (!response.ok) {
+                    console.error(`Error fetching ${tableName}:`, response.status);
+                    return [];
+                }
+
+                const data = await response.json();
+                return data.records.map(record => record.fields);
+            } catch (error) {
+                console.error(`Error fetching ${tableName}:`, error);
+                return [];
+            }
+        }
+
+        function createCard(title, data) {
             if (!data || data.length === 0) {
                 return `
                     <div class="card">
@@ -347,6 +332,7 @@
                 `;
             }
 
+            const columns = Object.keys(data[0] || {});
             let tableHTML = `<table>
                 <thead>
                     <tr>${columns.map(col => `<th>${col}</th>`).join('')}</tr>
@@ -357,7 +343,7 @@
                 tableHTML += '<tr>';
                 columns.forEach(col => {
                     const value = item[col] || '-';
-                    tableHTML += `<td>${value}</td>`;
+                    tableHTML += `<td>${String(value).substring(0, 100)}</td>`;
                 });
                 tableHTML += '</tr>';
             });
@@ -377,67 +363,39 @@
             `;
         }
 
-        // Función para hacer toggle de las tarjetas
         function toggleCard(header) {
             const content = header.nextElementSibling;
             const icon = header.querySelector('.toggle-icon');
-
             content.classList.toggle('open');
             icon.classList.toggle('open');
         }
 
-        // Función para cargar datos
         async function loadData() {
             try {
                 document.getElementById('loading').style.display = 'block';
                 document.getElementById('error').innerHTML = '';
 
-                const response = await fetch(`${BACKEND_URL}/api/all`);
-
-                if (!response.ok) {
-                    throw new Error(`Error: ${response.status}`);
-                }
-
-                const data = await response.json();
-
-                document.getElementById('loading').style.display = 'none';
-
                 let html = '<div class="grid">';
+                let foundData = false;
 
-                // Mostrar cada tabla
-                if (data.Equipos && data.Equipos.length > 0) {
-                    html += createCard('👥 Equipos', data.Equipos, ['NOMBRE', 'ROL', 'LLEGADA', 'SALIDA', 'HAB.']);
+                for (const table of tables) {
+                    const data = await fetchTableData(table.name);
+                    if (data.length > 0) {
+                        foundData = true;
+                        html += createCard(`${table.icon} ${table.name}`, data);
+                    }
                 }
 
-                if (data['Invitados del Bar'] && data['Invitados del Bar'].length > 0) {
-                    html += createCard('🍻 Invitados del Bar', data['Invitados del Bar'], ['NOMBRE', 'CONEXIÓN', 'DIETA', 'NOTAS']);
-                }
-
-                if (data.Viajes && data.Viajes.length > 0) {
-                    html += createCard('✈️ Viajes', data.Viajes, ['VIAJERO', 'TIPO', 'FECHA IDA', 'FECHA VUELTA']);
-                }
-
-                if (data.Habitaciones && data.Habitaciones.length > 0) {
-                    html += createCard('🏨 Habitaciones', data.Habitaciones, ['NOMBRE', 'NOCHE', 'HAB.', 'OCUPACIÓN']);
-                }
-
-                if (data['Turnos de Stand'] && data['Turnos de Stand'].length > 0) {
-                    html += createCard('🍹 Turnos de Stand', data['Turnos de Stand'], ['PERSONA', 'DÍA', 'TURNO', 'PUESTO']);
-                }
-
-                if (data['Productos y Consumibles'] && data['Productos y Consumibles'].length > 0) {
-                    html += createCard('🥃 Productos', data['Productos y Consumibles'], ['PRODUCTO', 'CANTIDAD', 'UNIDAD', 'ESTADO']);
-                }
-
-                if (data['POS y Merchandising'] && data['POS y Merchandising'].length > 0) {
-                    html += createCard('📦 POS & Merchandising', data['POS y Merchandising'], ['ITEM', 'CANTIDAD', 'UBICACIÓN', 'NOTAS']);
-                }
-
-                if (data.Brunch && data.Brunch.length > 0) {
-                    html += createCard('🥂 Brunch', data.Brunch, ['EVENTO', 'FECHA', 'HORA', 'LUGAR']);
+                if (!foundData) {
+                    document.getElementById('error').innerHTML = `
+                        <div class="error">
+                            <strong>Atención:</strong> No se encontraron datos en las tablas de Airtable. Verifica que las tablas existen y contienen datos.
+                        </div>
+                    `;
                 }
 
                 html += '</div>';
+                document.getElementById('loading').style.display = 'none';
                 document.getElementById('content').innerHTML = html;
                 document.getElementById('content').style.display = 'block';
 
@@ -445,21 +403,16 @@
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('error').innerHTML = `
                     <div class="error">
-                        <strong>Error de conexión:</strong> No se pudo cargar los datos.
-                        Verifica que el backend esté activo: ${BACKEND_URL}
+                        <strong>Error:</strong> ${error.message}
                     </div>
                 `;
-                console.error('Error:', error);
             }
         }
 
-        // Cargar datos cuando se abre la página
         document.addEventListener('DOMContentLoaded', function() {
             initCountdown();
             loadData();
-
-            // Recargar datos cada 5 segundos para mantenerlos actualizados
-            setInterval(loadData, 5000);
+            setInterval(loadData, 30000);
         });
     </script>
 </body>
