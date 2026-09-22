@@ -294,6 +294,7 @@
     <script>
         const BACKEND_URL = 'https://fibarvalaldolid2026-91c6f73ef573.herokuapp.com';
 
+        // Función para inicializar el countdown
         function initCountdown() {
             const eventDate = new Date('2026-08-15').getTime();
 
@@ -330,6 +331,7 @@
             setInterval(updateCountdown, 60000);
         }
 
+        // Función para crear una tarjeta de tabla
         function createCard(title, data, columns) {
             if (!data || data.length === 0) {
                 return `
@@ -375,6 +377,7 @@
             `;
         }
 
+        // Función para hacer toggle de las tarjetas
         function toggleCard(header) {
             const content = header.nextElementSibling;
             const icon = header.querySelector('.toggle-icon');
@@ -383,20 +386,16 @@
             icon.classList.toggle('open');
         }
 
+        // Función para cargar datos
         async function loadData() {
             try {
                 document.getElementById('loading').style.display = 'block';
                 document.getElementById('error').innerHTML = '';
 
-                const response = await fetch(`${BACKEND_URL}/api/all`, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json'
-                    }
-                });
+                const response = await fetch(`${BACKEND_URL}/api/all`);
 
                 if (!response.ok) {
-                    throw new Error(`Error HTTP: ${response.status}`);
+                    throw new Error(`Error: ${response.status}`);
                 }
 
                 const data = await response.json();
@@ -405,6 +404,7 @@
 
                 let html = '<div class="grid">';
 
+                // Mostrar cada tabla
                 if (data.Equipos && data.Equipos.length > 0) {
                     html += createCard('👥 Equipos', data.Equipos, ['NOMBRE', 'ROL', 'LLEGADA', 'SALIDA', 'HAB.']);
                 }
@@ -445,16 +445,20 @@
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('error').innerHTML = `
                     <div class="error">
-                        <strong>Error de conexión:</strong> ${error.message}
+                        <strong>Error de conexión:</strong> No se pudo cargar los datos.
+                        Verifica que el backend esté activo: ${BACKEND_URL}
                     </div>
                 `;
                 console.error('Error:', error);
             }
         }
 
+        // Cargar datos cuando se abre la página
         document.addEventListener('DOMContentLoaded', function() {
             initCountdown();
             loadData();
+
+            // Recargar datos cada 5 segundos para mantenerlos actualizados
             setInterval(loadData, 5000);
         });
     </script>
