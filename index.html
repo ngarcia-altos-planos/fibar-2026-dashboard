@@ -392,13 +392,17 @@
                 document.getElementById('loading').style.display = 'block';
                 document.getElementById('error').innerHTML = '';
 
+                console.log('Intentando conectar a:', `${BACKEND_URL}/api/all`);
                 const response = await fetch(`${BACKEND_URL}/api/all`);
+
+                console.log('Respuesta del servidor:', response.status, response.ok);
 
                 if (!response.ok) {
                     throw new Error(`Error: ${response.status}`);
                 }
 
                 const data = await response.json();
+                console.log('Datos recibidos:', data);
 
                 document.getElementById('loading').style.display = 'none';
 
